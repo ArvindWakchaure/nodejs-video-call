@@ -1,6 +1,14 @@
-let app = require('express')();
+let express = require('express');
+const bodyParser = require('body-parser');
+const cors = require('cors');
+let router = express.Router();
+let app = express();
+
 let server = require('http').createServer(app);
-//const { v4: uuidv4 } = require('uuid');
+app.options('*', cors());
+
+app.use(bodyParser.urlencoded({ extended:  false }));
+app.use(bodyParser.json());
 
 let list_join = [];
 let count = 0;
@@ -88,6 +96,20 @@ io.on('connection', (socket) => {
         console.log(socket.username);
     });
 });
+
+router.post('/login', (req, res) => {
+    const  username  =  req.body.username;
+    const  password  =  req.body.password;
+    console.log("login req: ",username, password);
+    let resData = {};
+    resData['response_code'] = 1;
+    resData['username'] = username;
+    resData['password'] = password;
+    resData['message'] = 'Login successfully.';
+    res.status(200).json(resData);
+})
+
+app.use(router);
 
 var port = process.env.PORT || 3000;
 server.listen(port, function () {
