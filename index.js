@@ -3,7 +3,7 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 let router = express.Router();
 let app = express();
-
+// const mysql = require('mysql');
 let server = require('http').createServer(app);
 app.options('*', cors());
 
@@ -15,8 +15,17 @@ let count = 0;
 
 let enable_camera = [];
 let count_camera = 0;
+// const connection = mysql.createConnection({
+//     host: 'localhost',
+//     user: 'phpmyadmin',
+//     password: 'root',
+//     database: 'video_call'
+//   });
 
-
+//   connection.connect((err) => {
+//     if (err) throw err;
+//     console.log('Database Connected!');
+//   });
 const io = require("socket.io")(server, {
     cors: {
         //allowedHeaders: ["my-custom-header"],
@@ -28,16 +37,41 @@ const io = require("socket.io")(server, {
 
 app.get('/', (req, res) => {
     res.status(200).send('Hello Yeah!!');
-    //res.redirect(`/${uuidv4()}`);
 });
 
 io.on('connection', (socket) => {
-    // console.log('==== ', socket);
-    // socket.on('broadcaster', () => {
-    //     broadcaster = socket.id;
-    //     console.log("broadcaster ", broadcaster);
-    //     io.emit("broadcaster");
-    // })
+    console.log("Connected user socket id : ", socket.id);
+    console.log("Connected user socket username : ", socket.username);
+   socket.on('call-to', (peerid, name) => {
+       console.log(peerid, "== ", name);
+
+    //    let sqlQUery = `INSERT INTO userlist (username, peerid, password) VALUES ('${socket.username }', '${peerid}', "123456")`; 
+    //    connection.query(sqlQUery, (err, res) => {
+    //        if(err) throw err;
+    //        console.log('Last insert ID:', res.insertId);
+    //    });
+
+    //    let sql = `SELECT * from userlist WHERE username='${socket.username}'`;
+    //    connection.query(sql, (err, res) => {
+    //     if(err) throw err;
+    //     console.log('Last insert ID:', res);   
+    // });
+
+    io.emit('call-from', {user: name, peer: peerid, status: 'connect'});
+   });
+
+   socket.on('call-recived', (anotherpeerid, name) => {
+       io.emit('join-call', {user: name, peer: anotherpeerid, status:'recieved'})
+   });
+   socket.on('set-names', (name)=> {
+    socket.username = name;
+    console.log("Username: ", socket.username);
+});
+
+
+   
+
+
     socket.on('disconnect', function () {
         io.emit('users-changed', { user: socket.username, event: 'left' });
         console.log('Disconnected: ', socket.username);
@@ -101,13 +135,22 @@ router.post('/login', (req, res) => {
     const  username  =  req.body.username;
     const  password  =  req.body.password;
     console.log("login req: ",username, password);
+    // let sqlQUery = 'INSERT INTO user (username, peerid, password) VALUES ("Arvind", "7s8ddbd8adasd", "123456")'; 
+    // con.query(sqlQUery, (err, res) => {
+    //     if(err) throw err;
+
+    //     console.log('Last insert ID:', res.insertId);
+    // })
     let resData = {};
     resData['response_code'] = 1;
     resData['username'] = username;
     resData['password'] = password;
     resData['message'] = 'Login successfully.';
     res.status(200).json(resData);
+
 })
+
+ 
 
 app.use(router);
 
